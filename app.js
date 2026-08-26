@@ -43,10 +43,12 @@ const DEFAULT_STUDENTS = [
 
 const STORAGE_KEY = "goi-ten-hoc-sinh-roster-v1";
 const HISTORY_KEY = "goi-ten-hoc-sinh-history-v1";
+const MAX_STUDENTS = 40;
 const COLORS = ["#ffd35a", "#ff7657", "#57c7e9", "#9a7cf3", "#61d09f", "#ff8fb1"];
 
 const elements = {
   orbitStage: document.querySelector("#orbitStage"),
+  orbitViewport: document.querySelector("#orbitViewport"),
   studentOrbit: document.querySelector("#studentOrbit"),
   selectedName: document.querySelector("#selectedName"),
   selectedHint: document.querySelector("#selectedHint"),
@@ -77,6 +79,7 @@ let audioContext = null;
 let musicTimer = null;
 let musicStep = 0;
 let isMusicOn = false;
+let lastHoverSoundAt = 0;
 
 function loadList(key, fallback) {
   try {
@@ -97,7 +100,8 @@ function normalizeNames(value) {
       if (!name || seen.has(key)) return false;
       seen.add(key);
       return true;
-    });
+    })
+    .slice(0, MAX_STUDENTS);
 }
 
 function cryptoRandomIndex(length) {
@@ -111,18 +115,77 @@ function cryptoRandomIndex(length) {
   return random[0] % length;
 }
 
+function calculateRingLayout(count) {
+  if (count <= 10) {
+    return [{ count, radius: Math.max(190, 110 + count * 16) }];
+  }
+
+  if (count <= 24) {
+    const innerCount = Math.round(count * 0.38);
+    return [
+      { count: innerCount, radius: 195 + Math.min(innerCount, 8) * 4 },
+      { count: count - innerCount, radius: 315 + Math.min(count - innerCount, 15) * 3.5 },
+    ];
+  }
+
+  const outerCount = Math.ceil(count * 0.5);
+  const remaining = count - outerCount;
+  const middleCount = Math.ceil(remaining * 0.7);
+  return [
+    { count: remaining - middleCount, radius: 195 },
+    { count: middleCount, radius: 320 },
+    { count: outerCount, radius: 445 },
+  ];
+}
+
+function playNameHoverSound(index) {
+  if (isSpinning) return;
+  const now = performance.now();
+  if (now - lastHoverSoundAt < 90) return;
+  const context = getAudioContext();
+  if (!context || context.state !== "running") return;
+  lastHoverSoundAt = now;
+  const notes = [659, 698, 784, 880, 988, 1047];
+  const note = notes[index % notes.length];
+  playTone(note, 0, 0.11, "sine", 0.028);
+  playTone(note * 1.5, 0.035, 0.09, "triangle", 0.016);
+}
+
 function renderOrbit() {
   elements.studentOrbit.replaceChildren();
   elements.studentCount.textContent = students.length;
 
-  const displayLimit = window.innerWidth < 620 ? 14 : 18;
-  const visibleStudents = students.slice(0, displayLimit);
-  visibleStudents.forEach((student, index) => {
-    const chip = document.createElement("span");
-    chip.className = "student-chip";
-    chip.textContent = student;
-    chip.style.setProperty("--chip-angle", `${(360 / visibleStudents.length) * index}deg`);
-    elements.studentOrbit.append(chip);
+  let studentIndex = 0;
+  calculateRingLayout(students.length).forEach((ring, ringIndex) => {
+    const guide = document.createElement("i");
+    guide.className = "orbit-ring";
+    guide.style.setProperty("--ring-radius", `${ring.radius}px`);
+    elements.studentOrbit.append(guide);
+
+    const offset = -90 + (ringIndex % 2 ? 180 / ring.count : 0);
+    for (let position = 0; position < ring.count; position += 1) {
+      const student = students[studentIndex];
+      const chipIndex = studentIndex;
+      const chip = document.createElement("span");
+      chip.className = "student-chip";
+      chip.textContent = student;
+      chip.dataset.student = student;
+      chip.style.setProperty("--orbit-radius", `${ring.radius}px`);
+      chip.style.setProperty("--chip-angle", `${offset + (360 / ring.count) * position}deg`);
+      chip.style.setProperty("--chip-color", COLORS[chipIndex % COLORS.length]);
+      chip.addEventListener("pointerenter", () => {
+        if (isSpinning) return;
+        chip.classList.add("is-hovered");
+        playNameHoverSound(chipIndex);
+      });
+      chip.addEventListener("pointerleave", () => chip.classList.remove("is-hovered"));
+      elements.studentOrbit.append(chip);
+      studentIndex += 1;
+    }
+  });
+
+  window.requestAnimationFrame(() => {
+    elements.orbitViewport.scrollLeft = (elements.orbitViewport.scrollWidth - elements.orbitViewport.clientWidth) / 2;
   });
 }
 
@@ -224,6 +287,7 @@ function callStudent() {
   if (isSpinning || students.length === 0) return;
   isSpinning = true;
   elements.callButton.disabled = true;
+  document.querySelectorAll(".student-chip").forEach((chip) => chip.classList.remove("is-selected", "is-hovered"));
   elements.orbitStage.classList.remove("has-winner");
   elements.spotlight.classList.remove("is-winner");
   elements.orbitStage.classList.add("is-spinning");
@@ -241,6 +305,9 @@ function callStudent() {
     elements.orbitStage.classList.remove("is-spinning");
     elements.orbitStage.classList.add("has-winner");
     elements.spotlight.classList.add("is-winner");
+    document.querySelectorAll(".student-chip").forEach((chip) => {
+      chip.classList.toggle("is-selected", chip.dataset.student === winner);
+    });
     history = [winner, ...history].slice(0, 8);
     localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
     renderHistory();
@@ -267,7 +334,9 @@ function closeRosterModal() {
 
 function updateRosterCount() {
   const count = normalizeNames(elements.rosterInput.value).length;
-  elements.rosterCount.textContent = `${count} học sinh`;
+  elements.rosterCount.textContent = count === MAX_STUDENTS
+    ? `${count} học sinh · Đã đạt tối đa`
+    : `${count} học sinh`;
 }
 
 function saveRoster() {
@@ -311,6 +380,8 @@ document.addEventListener("keydown", (event) => {
     callStudent();
   }
 });
+
+document.addEventListener("pointerdown", () => getAudioContext(), { once: true });
 
 let resizeTimer;
 window.addEventListener("resize", () => {

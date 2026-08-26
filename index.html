@@ -64,14 +64,16 @@
       <section class="picker-card" aria-label="Vòng quay gọi học sinh">
         <div class="confetti" id="confetti" aria-hidden="true"></div>
 
-        <div class="orbit-stage" id="orbitStage">
-          <div class="orbit" id="studentOrbit" aria-hidden="true"></div>
+        <div class="orbit-viewport" id="orbitViewport">
+          <div class="orbit-stage" id="orbitStage">
+            <div class="orbit" id="studentOrbit" aria-hidden="true"></div>
 
-          <div class="spotlight" id="spotlight" role="status" aria-live="polite">
-            <span class="spotlight__sparkle" aria-hidden="true">✦</span>
-            <p id="statusLabel">Cùng bắt đầu nào!</p>
-            <strong id="selectedName">Sẵn sàng</strong>
-            <small id="selectedHint">Tên bạn được chọn sẽ xuất hiện ở đây</small>
+            <div class="spotlight" id="spotlight" role="status" aria-live="polite">
+              <span class="spotlight__sparkle" aria-hidden="true">✦</span>
+              <p id="statusLabel">Cùng bắt đầu nào!</p>
+              <strong id="selectedName">Sẵn sàng</strong>
+              <small id="selectedHint">Tên bạn được chọn sẽ xuất hiện ở đây</small>
+            </div>
           </div>
         </div>
 
@@ -103,7 +105,7 @@
         <span class="modal__sticker" aria-hidden="true">✎</span>
         <p class="eyebrow">Danh sách của lớp mình</p>
         <h2 id="rosterTitle">Chỉnh sửa học sinh</h2>
-        <p>Mỗi dòng là tên một học sinh. Các dòng trống sẽ tự động được bỏ qua.</p>
+        <p>Mỗi dòng là tên một học sinh. Tối đa 40 bạn, các dòng trống sẽ tự động được bỏ qua.</p>
         <label for="rosterInput">Tên học sinh</label>
         <textarea id="rosterInput" spellcheck="false"></textarea>
         <div class="modal__meta">

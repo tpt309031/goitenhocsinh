@@ -187,7 +187,7 @@ a:focus-visible {
 }
 
 .app-shell {
-  width: min(1080px, calc(100% - 40px));
+  width: min(1220px, calc(100% - 40px));
   margin: 28px auto 0;
 }
 
@@ -272,7 +272,7 @@ h1 span {
 
 .picker-card {
   position: relative;
-  min-height: 540px;
+  min-height: 1160px;
   padding: 30px 32px 26px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.85);
@@ -293,15 +293,28 @@ h1 span {
   pointer-events: none;
 }
 
+.orbit-viewport {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  overscroll-behavior-inline: contain;
+}
+
+.orbit-viewport::-webkit-scrollbar {
+  display: none;
+}
+
 .orbit-stage {
   position: relative;
-  width: min(100%, 720px);
-  height: 390px;
+  width: 1000px;
+  height: 1000px;
   margin: 0 auto;
 }
 
 .orbit {
-  --orbit-radius: 176px;
   position: absolute;
   top: 50%;
   left: 50%;
@@ -310,24 +323,27 @@ h1 span {
   transition: filter 300ms ease;
 }
 
-.orbit::before,
-.orbit::after {
-  content: "";
+.orbit-ring {
   position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(var(--ring-radius) * 2);
+  height: calc(var(--ring-radius) * 2);
   border: 2px dashed rgba(87, 199, 233, 0.23);
   border-radius: 50%;
   transform: translate(-50%, -50%);
+  box-shadow:
+    0 0 34px rgba(87, 199, 233, 0.08),
+    inset 0 0 34px rgba(255, 211, 90, 0.06);
+  pointer-events: none;
 }
 
-.orbit::before {
-  width: calc(var(--orbit-radius) * 2 + 28px);
-  height: calc(var(--orbit-radius) * 2 + 28px);
+.orbit-ring:nth-child(2) {
+  border-color: rgba(255, 143, 177, 0.2);
 }
 
-.orbit::after {
-  width: 264px;
-  height: 264px;
-  border-color: rgba(255, 211, 90, 0.26);
+.orbit-ring:nth-child(3) {
+  border-color: rgba(154, 124, 243, 0.2);
 }
 
 .student-chip {
@@ -336,8 +352,8 @@ h1 span {
   position: absolute;
   left: 0;
   top: 0;
-  width: 116px;
-  min-height: 42px;
+  width: 104px;
+  min-height: 46px;
   display: grid;
   place-items: center;
   padding: 6px 9px;
@@ -355,14 +371,61 @@ h1 span {
     rotate(var(--chip-angle))
     translateY(calc(var(--orbit-radius) * -1))
     rotate(calc(0deg - var(--chip-angle)));
-  transition: opacity 240ms ease, filter 240ms ease;
+  transition:
+    opacity 240ms ease,
+    filter 240ms ease,
+    border-color 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease;
+  cursor: pointer;
+  isolation: isolate;
 }
 
-.student-chip:nth-child(3n + 1) { --chip-color: var(--orange); }
-.student-chip:nth-child(3n + 2) { --chip-color: var(--blue); }
-.student-chip:nth-child(3n + 3) { --chip-color: var(--purple); }
-.student-chip:nth-child(5n) { --chip-color: var(--green); }
-.student-chip:nth-child(7n) { --chip-color: var(--pink); }
+.student-chip::before,
+.student-chip::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+.student-chip::before {
+  z-index: -2;
+  inset: -8px;
+  border: 2px solid var(--chip-color);
+  border-radius: 21px;
+  opacity: 0;
+  filter: blur(2px);
+}
+
+.student-chip::after {
+  z-index: -1;
+  inset: 0;
+  border-radius: 13px;
+  opacity: 0;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.96), transparent 72%);
+}
+
+.orbit-stage:not(.is-spinning) .student-chip:hover,
+.orbit-stage:not(.is-spinning) .student-chip.is-hovered {
+  z-index: 6;
+  border-color: var(--chip-color);
+  background: color-mix(in srgb, var(--chip-color) 28%, #fff);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--chip-color) 30%, transparent),
+    0 0 24px color-mix(in srgb, var(--chip-color) 75%, transparent),
+    0 6px 0 color-mix(in srgb, var(--chip-color) 20%, transparent);
+  filter: saturate(1.15) brightness(1.04);
+}
+
+.orbit-stage:not(.is-spinning) .student-chip:hover::before,
+.orbit-stage:not(.is-spinning) .student-chip.is-hovered::before {
+  animation: name-glow-border 680ms ease-out both;
+}
+
+.orbit-stage:not(.is-spinning) .student-chip:hover::after,
+.orbit-stage:not(.is-spinning) .student-chip.is-hovered::after {
+  animation: name-glow-in 560ms ease-out both;
+}
 
 .orbit-stage.is-spinning .orbit {
   animation: spin-orbit 2.8s cubic-bezier(0.21, 0.8, 0.28, 1) both;
@@ -370,6 +433,7 @@ h1 span {
 
 .orbit-stage.is-spinning .student-chip {
   animation: keep-upright 2.8s cubic-bezier(0.21, 0.8, 0.28, 1) both;
+  pointer-events: none;
 }
 
 .orbit-stage.is-spinning .spotlight {
@@ -379,6 +443,19 @@ h1 span {
 .orbit-stage.has-winner .student-chip {
   opacity: 0.42;
   filter: saturate(0.65);
+}
+
+.orbit-stage.has-winner .student-chip.is-selected {
+  z-index: 6;
+  opacity: 1;
+  border-color: var(--yellow);
+  filter: none;
+  background: #fff7c7;
+  box-shadow:
+    0 0 0 4px rgba(255, 211, 90, 0.28),
+    0 0 28px rgba(255, 183, 67, 0.72),
+    0 6px 0 rgba(255, 183, 67, 0.2);
+  animation: selected-name-pulse 1.2s ease-in-out infinite alternate;
 }
 
 .spotlight {
@@ -791,6 +868,43 @@ body.modal-open {
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+@keyframes name-glow-border {
+  0% {
+    inset: -12px;
+    opacity: 0;
+    box-shadow: 0 0 0 10px transparent;
+  }
+  38% {
+    opacity: 0.9;
+    box-shadow: 0 0 20px color-mix(in srgb, var(--chip-color) 82%, transparent);
+  }
+  100% {
+    inset: 2px;
+    opacity: 0.55;
+    box-shadow: 0 0 9px color-mix(in srgb, var(--chip-color) 58%, transparent);
+  }
+}
+
+@keyframes name-glow-in {
+  from { opacity: 0; transform: scale(1.18); }
+  to { opacity: 0.62; transform: scale(0.9); }
+}
+
+@keyframes selected-name-pulse {
+  from {
+    box-shadow:
+      0 0 0 3px rgba(255, 211, 90, 0.24),
+      0 0 18px rgba(255, 183, 67, 0.5),
+      0 6px 0 rgba(255, 183, 67, 0.18);
+  }
+  to {
+    box-shadow:
+      0 0 0 7px rgba(255, 211, 90, 0.12),
+      0 0 34px rgba(255, 183, 67, 0.82),
+      0 6px 0 rgba(255, 183, 67, 0.22);
+  }
+}
+
 @media (max-width: 760px) {
   .topbar {
     width: min(100% - 24px, 620px);
@@ -833,30 +947,9 @@ body.modal-open {
   }
 
   .picker-card {
-    min-height: 490px;
+    min-height: 1130px;
     padding: 18px 10px 24px;
     border-radius: 28px;
-  }
-
-  .orbit-stage {
-    height: 352px;
-  }
-
-  .orbit {
-    --orbit-radius: 148px;
-  }
-
-  .student-chip {
-    width: 92px;
-    min-height: 36px;
-    padding: 5px 7px;
-    border-radius: 12px;
-    font-size: 9px;
-  }
-
-  .orbit::after {
-    width: 220px;
-    height: 220px;
   }
 
   .spotlight {
@@ -904,16 +997,6 @@ body.modal-open {
 
   .picker-card {
     margin-top: 12px;
-  }
-
-  .orbit {
-    --orbit-radius: 132px;
-  }
-
-  .student-chip {
-    width: 82px;
-    min-height: 32px;
-    font-size: 8px;
   }
 
   .spotlight {
