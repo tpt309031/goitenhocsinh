@@ -44,6 +44,7 @@ const DEFAULT_STUDENTS = [
 const STORAGE_KEY = "goi-ten-hoc-sinh-roster-v1";
 const HISTORY_KEY = "goi-ten-hoc-sinh-history-v1";
 const MAX_STUDENTS = 40;
+const ORBIT_STAGE_SIZE = 700;
 const COLORS = ["#ffd35a", "#ff7657", "#57c7e9", "#9a7cf3", "#61d09f", "#ff8fb1"];
 
 const elements = {
@@ -117,14 +118,14 @@ function cryptoRandomIndex(length) {
 
 function calculateRingLayout(count) {
   if (count <= 10) {
-    return [{ count, radius: Math.max(190, 110 + count * 16) }];
+    return [{ count, radius: Math.max(150, 85 + count * 13) }];
   }
 
   if (count <= 24) {
     const innerCount = Math.round(count * 0.38);
     return [
-      { count: innerCount, radius: 195 + Math.min(innerCount, 8) * 4 },
-      { count: count - innerCount, radius: 315 + Math.min(count - innerCount, 15) * 3.5 },
+      { count: innerCount, radius: 140 + Math.min(innerCount, 8) * 3 },
+      { count: count - innerCount, radius: 235 + Math.min(count - innerCount, 15) * 2 },
     ];
   }
 
@@ -132,10 +133,17 @@ function calculateRingLayout(count) {
   const remaining = count - outerCount;
   const middleCount = Math.ceil(remaining * 0.7);
   return [
-    { count: remaining - middleCount, radius: 195 },
-    { count: middleCount, radius: 320 },
-    { count: outerCount, radius: 445 },
+    { count: remaining - middleCount, radius: 140 },
+    { count: middleCount, radius: 220 },
+    { count: outerCount, radius: 310 },
   ];
+}
+
+function updateOrbitScale() {
+  const availableWidth = Math.max(1, elements.orbitViewport.clientWidth - 8);
+  const availableHeight = Math.max(1, elements.orbitViewport.clientHeight - 8);
+  const scale = Math.min(1, availableWidth / ORBIT_STAGE_SIZE, availableHeight / ORBIT_STAGE_SIZE);
+  elements.orbitStage.style.setProperty("--stage-scale", scale.toFixed(4));
 }
 
 function playNameHoverSound(index) {
@@ -157,11 +165,6 @@ function renderOrbit() {
 
   let studentIndex = 0;
   calculateRingLayout(students.length).forEach((ring, ringIndex) => {
-    const guide = document.createElement("i");
-    guide.className = "orbit-ring";
-    guide.style.setProperty("--ring-radius", `${ring.radius}px`);
-    elements.studentOrbit.append(guide);
-
     const offset = -90 + (ringIndex % 2 ? 180 / ring.count : 0);
     for (let position = 0; position < ring.count; position += 1) {
       const student = students[studentIndex];
@@ -184,9 +187,7 @@ function renderOrbit() {
     }
   });
 
-  window.requestAnimationFrame(() => {
-    elements.orbitViewport.scrollLeft = (elements.orbitViewport.scrollWidth - elements.orbitViewport.clientWidth) / 2;
-  });
+  window.requestAnimationFrame(updateOrbitScale);
 }
 
 function shortName(fullName) {
@@ -386,7 +387,7 @@ document.addEventListener("pointerdown", () => getAudioContext(), { once: true }
 let resizeTimer;
 window.addEventListener("resize", () => {
   window.clearTimeout(resizeTimer);
-  resizeTimer = window.setTimeout(renderOrbit, 160);
+  resizeTimer = window.setTimeout(updateOrbitScale, 100);
 });
 
 renderOrbit();
