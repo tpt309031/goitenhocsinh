@@ -41,6 +41,13 @@ const DEFAULT_STUDENTS = [
   "Lê Phương Vy",
 ];
 
+const SOUTHERN_VOICE_ASSETS = new Map(
+  DEFAULT_STUDENTS.map((name, index) => [
+    normalizeVoiceName(name),
+    `audio/students/${String(index + 1).padStart(2, "0")}.wav`,
+  ]),
+);
+
 const STORAGE_KEY = "goi-ten-hoc-sinh-roster-v1";
 const HISTORY_KEY = "goi-ten-hoc-sinh-history-v1";
 const MAX_STUDENTS = 40;
@@ -84,6 +91,7 @@ let musicStep = 0;
 let isMusicOn = false;
 let lastHoverSoundAt = 0;
 let musicDuckedUntil = 0;
+let activeAnnouncement = null;
 
 function loadList(key, fallback) {
   try {
@@ -106,6 +114,10 @@ function normalizeNames(value) {
       return true;
     })
     .slice(0, MAX_STUDENTS);
+}
+
+function normalizeVoiceName(name) {
+  return name.normalize("NFC").replace(/\s+/g, " ").trim().toLocaleLowerCase("vi");
 }
 
 function cryptoRandomIndex(length) {
@@ -357,6 +369,40 @@ function speakStudentName(name) {
   window.speechSynthesis.speak(utterance);
 }
 
+function prepareStudentVoice(name) {
+  const source = SOUTHERN_VOICE_ASSETS.get(normalizeVoiceName(name));
+  if (!source) return null;
+  const audio = new Audio(source);
+  audio.preload = "auto";
+  audio.volume = 1;
+  audio.load();
+  return audio;
+}
+
+function playStudentVoice(name, preparedAudio) {
+  if (!preparedAudio) {
+    speakStudentName(name);
+    return;
+  }
+
+  if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+  activeAnnouncement?.pause();
+  activeAnnouncement = preparedAudio;
+  let usedFallback = false;
+  const fallback = () => {
+    if (usedFallback) return;
+    usedFallback = true;
+    activeAnnouncement = null;
+    speakStudentName(name);
+  };
+
+  preparedAudio.addEventListener("ended", () => {
+    if (activeAnnouncement === preparedAudio) activeAnnouncement = null;
+  }, { once: true });
+  preparedAudio.addEventListener("error", fallback, { once: true });
+  preparedAudio.play().catch(fallback);
+}
+
 function playChaseTick(index) {
   const notes = [523.25, 587.33, 659.25, 698.46, 783.99];
   playTone(notes[index % notes.length], 0, 0.055, "square", 0.012);
@@ -395,6 +441,11 @@ function renderHistory() {
 
 function callStudent() {
   if (isSpinning || students.length === 0) return;
+  activeAnnouncement?.pause();
+  activeAnnouncement = null;
+  if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+  const winner = students[cryptoRandomIndex(students.length)];
+  const winnerAudio = prepareStudentVoice(winner);
   isSpinning = true;
   elements.callButton.disabled = true;
   document.querySelectorAll(".student-chip").forEach((chip) => chip.classList.remove("is-selected", "is-hovered"));
@@ -423,7 +474,6 @@ function callStudent() {
     window.clearInterval(previewTimer);
     window.clearInterval(chaseTimer);
     activeChip?.classList.remove("is-chasing");
-    const winner = students[cryptoRandomIndex(students.length)];
     elements.selectedName.textContent = winner;
     elements.statusLabel.textContent = "Xin chúc mừng!";
     elements.selectedHint.textContent = "Mời bạn chuẩn bị câu trả lời nào!";
@@ -438,8 +488,8 @@ function callStudent() {
     renderHistory();
     burstConfetti();
     playWinnerSound();
-    musicDuckedUntil = performance.now() + 2600;
-    window.setTimeout(() => speakStudentName(winner), 420);
+    musicDuckedUntil = performance.now() + 4200;
+    window.setTimeout(() => playStudentVoice(winner, winnerAudio), 420);
     elements.callButton.disabled = false;
     isSpinning = false;
   }, SPIN_DURATION);
