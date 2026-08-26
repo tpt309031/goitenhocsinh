@@ -333,8 +333,8 @@ h1 br {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 700px;
-  height: 700px;
+  width: 1160px;
+  height: 560px;
   margin: 0;
   transform: translate(-50%, -50%) scale(var(--stage-scale));
   transform-origin: center;
@@ -350,30 +350,30 @@ h1 br {
 }
 
 .student-chip {
-  --chip-angle: 0deg;
+  --chip-x: 0px;
+  --chip-y: 0px;
+  --chip-delay: 0ms;
   --chip-color: var(--blue);
   position: absolute;
   left: 0;
   top: 0;
-  width: 78px;
-  min-height: 38px;
+  width: 104px;
+  min-height: 46px;
   display: grid;
   place-items: center;
-  padding: 4px 5px;
+  padding: 5px 7px;
   border: 2px solid color-mix(in srgb, var(--chip-color) 56%, #fff);
   border-radius: 12px;
   color: var(--ink);
   text-align: center;
-  font-size: 10.5px;
+  font-size: 13px;
   font-weight: 900;
   line-height: 1.08;
   background: color-mix(in srgb, var(--chip-color) 16%, #fff);
   box-shadow: 0 5px 0 color-mix(in srgb, var(--chip-color) 17%, transparent);
   transform:
     translate(-50%, -50%)
-    rotate(var(--chip-angle))
-    translateY(calc(var(--orbit-radius) * -1))
-    rotate(calc(0deg - var(--chip-angle)));
+    translate(var(--chip-x), var(--chip-y));
   transition:
     opacity 240ms ease,
     filter 240ms ease,
@@ -436,6 +436,7 @@ h1 br {
 
 .orbit-stage.is-spinning .student-chip {
   animation: keep-upright 2.8s cubic-bezier(0.21, 0.8, 0.28, 1) both;
+  animation-delay: var(--chip-delay);
   pointer-events: none;
 }
 
@@ -466,8 +467,8 @@ h1 br {
   top: 50%;
   left: 50%;
   z-index: 3;
-  width: 200px;
-  min-height: 150px;
+  width: 240px;
+  min-height: 160px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -530,7 +531,7 @@ h1 br {
   display: block;
   margin: 8px 0 5px;
   font-family: "Baloo 2", sans-serif;
-  font-size: 30px;
+  font-size: 34px;
   line-height: 0.92;
   letter-spacing: -0.03em;
 }
@@ -837,20 +838,24 @@ body.modal-open {
 }
 
 @keyframes spin-orbit {
-  0% { transform: rotate(0deg) scale(1); }
-  35% { transform: rotate(560deg) scale(0.96); }
-  100% { transform: rotate(1080deg) scale(1); }
+  0% { transform: scale(1); filter: saturate(1); }
+  32% { transform: scale(0.95); filter: saturate(1.35); }
+  68% { transform: scale(1.02); filter: saturate(1.15); }
+  100% { transform: scale(1); filter: saturate(1); }
 }
 
 @keyframes keep-upright {
   0% {
-    transform: translate(-50%, -50%) rotate(var(--chip-angle)) translateY(calc(var(--orbit-radius) * -1)) rotate(calc(0deg - var(--chip-angle)));
+    transform: translate(-50%, -50%) translate(var(--chip-x), var(--chip-y)) scale(1) rotate(0deg);
   }
-  35% {
-    transform: translate(-50%, -50%) rotate(calc(var(--chip-angle) + 560deg)) translateY(calc(var(--orbit-radius) * -1)) rotate(calc(-560deg - var(--chip-angle)));
+  34% {
+    transform: translate(-50%, -50%) translate(var(--chip-x), var(--chip-y)) scale(0.88) rotate(-5deg);
+  }
+  68% {
+    transform: translate(-50%, -50%) translate(var(--chip-x), var(--chip-y)) scale(1.06) rotate(5deg);
   }
   100% {
-    transform: translate(-50%, -50%) rotate(calc(var(--chip-angle) + 1080deg)) translateY(calc(var(--orbit-radius) * -1)) rotate(calc(-1080deg - var(--chip-angle)));
+    transform: translate(-50%, -50%) translate(var(--chip-x), var(--chip-y)) scale(1) rotate(0deg);
   }
 }
 

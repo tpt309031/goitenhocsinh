@@ -44,7 +44,8 @@ const DEFAULT_STUDENTS = [
 const STORAGE_KEY = "goi-ten-hoc-sinh-roster-v1";
 const HISTORY_KEY = "goi-ten-hoc-sinh-history-v1";
 const MAX_STUDENTS = 40;
-const ORBIT_STAGE_SIZE = 700;
+const ORBIT_STAGE_WIDTH = 1160;
+const ORBIT_STAGE_HEIGHT = 560;
 const COLORS = ["#ffd35a", "#ff7657", "#57c7e9", "#9a7cf3", "#61d09f", "#ff8fb1"];
 
 const elements = {
@@ -116,33 +117,55 @@ function cryptoRandomIndex(length) {
   return random[0] % length;
 }
 
-function calculateRingLayout(count) {
+function calculateFrameLayout(count) {
   if (count <= 10) {
-    return [{ count, radius: Math.max(150, 85 + count * 13) }];
+    return [{ count, halfWidth: 240 + count * 14, halfHeight: 90 + count * 7 }];
   }
 
-  if (count <= 24) {
-    const innerCount = Math.round(count * 0.38);
-    return [
-      { count: innerCount, radius: 140 + Math.min(innerCount, 8) * 3 },
-      { count: count - innerCount, radius: 235 + Math.min(count - innerCount, 15) * 2 },
-    ];
+  if (count <= 20) {
+    return [{ count, halfWidth: Math.min(520, 240 + count * 14), halfHeight: Math.min(220, 90 + count * 7) }];
   }
 
-  const outerCount = Math.ceil(count * 0.5);
-  const remaining = count - outerCount;
-  const middleCount = Math.ceil(remaining * 0.7);
+  const outerCount = Math.ceil(count * 0.6);
   return [
-    { count: remaining - middleCount, radius: 140 },
-    { count: middleCount, radius: 220 },
-    { count: outerCount, radius: 310 },
+    { count: count - outerCount, halfWidth: 380, halfHeight: 130 },
+    { count: outerCount, halfWidth: 520, halfHeight: 235 },
   ];
+}
+
+function getFramePoints(count, halfWidth, halfHeight) {
+  if (count === 1) return [{ x: 0, y: -halfHeight }];
+  if (count === 2) return [{ x: -halfWidth, y: 0 }, { x: halfWidth, y: 0 }];
+  if (count === 3) return [{ x: 0, y: -halfHeight }, { x: halfWidth, y: 0 }, { x: -halfWidth, y: 0 }];
+
+  let horizontalCount = 2 * Math.round((count * halfWidth) / (halfWidth + halfHeight) / 2);
+  horizontalCount = Math.max(2, Math.min(count - 2, horizontalCount));
+  const verticalCount = count - horizontalCount;
+  const topCount = Math.ceil(horizontalCount / 2);
+  const bottomCount = Math.floor(horizontalCount / 2);
+  const rightCount = Math.ceil(verticalCount / 2);
+  const leftCount = Math.floor(verticalCount / 2);
+  const points = [];
+
+  for (let index = 0; index < topCount; index += 1) {
+    points.push({ x: -halfWidth + ((index + 1) * halfWidth * 2) / (topCount + 1), y: -halfHeight });
+  }
+  for (let index = 0; index < rightCount; index += 1) {
+    points.push({ x: halfWidth, y: -halfHeight + ((index + 1) * halfHeight * 2) / (rightCount + 1) });
+  }
+  for (let index = 0; index < bottomCount; index += 1) {
+    points.push({ x: halfWidth - ((index + 1) * halfWidth * 2) / (bottomCount + 1), y: halfHeight });
+  }
+  for (let index = 0; index < leftCount; index += 1) {
+    points.push({ x: -halfWidth, y: halfHeight - ((index + 1) * halfHeight * 2) / (leftCount + 1) });
+  }
+  return points;
 }
 
 function updateOrbitScale() {
   const availableWidth = Math.max(1, elements.orbitViewport.clientWidth - 8);
   const availableHeight = Math.max(1, elements.orbitViewport.clientHeight - 8);
-  const scale = Math.min(1, availableWidth / ORBIT_STAGE_SIZE, availableHeight / ORBIT_STAGE_SIZE);
+  const scale = Math.min(1, availableWidth / ORBIT_STAGE_WIDTH, availableHeight / ORBIT_STAGE_HEIGHT);
   elements.orbitStage.style.setProperty("--stage-scale", scale.toFixed(4));
 }
 
@@ -164,17 +187,19 @@ function renderOrbit() {
   elements.studentCount.textContent = students.length;
 
   let studentIndex = 0;
-  calculateRingLayout(students.length).forEach((ring, ringIndex) => {
-    const offset = -90 + (ringIndex % 2 ? 180 / ring.count : 0);
-    for (let position = 0; position < ring.count; position += 1) {
+  calculateFrameLayout(students.length).forEach((frame) => {
+    const points = getFramePoints(frame.count, frame.halfWidth, frame.halfHeight);
+    for (let position = 0; position < frame.count; position += 1) {
       const student = students[studentIndex];
       const chipIndex = studentIndex;
+      const point = points[position];
       const chip = document.createElement("span");
       chip.className = "student-chip";
       chip.textContent = student;
       chip.dataset.student = student;
-      chip.style.setProperty("--orbit-radius", `${ring.radius}px`);
-      chip.style.setProperty("--chip-angle", `${offset + (360 / ring.count) * position}deg`);
+      chip.style.setProperty("--chip-x", `${point.x}px`);
+      chip.style.setProperty("--chip-y", `${point.y}px`);
+      chip.style.setProperty("--chip-delay", `${(-chipIndex * 37) % 420}ms`);
       chip.style.setProperty("--chip-color", COLORS[chipIndex % COLORS.length]);
       chip.addEventListener("pointerenter", () => {
         if (isSpinning) return;
