@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#ff7a59" />
+    <meta
+      name="description"
+      content="Công cụ gọi ngẫu nhiên học sinh với vòng quay vui nhộn dành cho lớp học tiểu học."
+    />
+    <title>Gọi tên học sinh</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="background-shapes" aria-hidden="true">
+      <span class="shape shape--one"></span>
+      <span class="shape shape--two"></span>
+      <span class="shape shape--three"></span>
+      <span class="shape shape--four"></span>
+    </div>
+
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Gọi tên học sinh - Trang chủ">
+        <span class="brand__icon" aria-hidden="true">★</span>
+        <span>
+          <strong>Gọi tên học sinh</strong>
+          <small>Mỗi lượt gọi, một niềm vui!</small>
+        </span>
+      </a>
+
+      <div class="topbar__actions">
+        <button class="icon-button" id="musicButton" type="button" aria-pressed="false">
+          <span aria-hidden="true" id="musicIcon">♫</span>
+          <span id="musicLabel">Bật nhạc</span>
+        </button>
+        <button class="icon-button" id="editButton" type="button">
+          <span aria-hidden="true">✎</span>
+          <span>Danh sách lớp</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="app-shell">
+      <section class="hero" aria-labelledby="pageTitle">
+        <div class="hero__copy">
+          <p class="eyebrow"><span aria-hidden="true">☀</span> Hôm nay ai sẽ trả bài?</p>
+          <h1 id="pageTitle">Sẵn sàng chưa<br /><span>cả lớp ơi?</span></h1>
+          <p>Nhấn nút bên dưới để chọn ngẫu nhiên một bạn thật may mắn nhé!</p>
+        </div>
+
+        <div class="class-count" title="Số học sinh trong danh sách">
+          <span aria-hidden="true">☺</span>
+          <strong id="studentCount">40</strong>
+          <small>học sinh</small>
+        </div>
+      </section>
+
+      <section class="picker-card" aria-label="Vòng quay gọi học sinh">
+        <div class="confetti" id="confetti" aria-hidden="true"></div>
+
+        <div class="orbit-stage" id="orbitStage">
+          <div class="orbit" id="studentOrbit" aria-hidden="true"></div>
+
+          <div class="spotlight" id="spotlight" role="status" aria-live="polite">
+            <span class="spotlight__sparkle" aria-hidden="true">✦</span>
+            <p id="statusLabel">Cùng bắt đầu nào!</p>
+            <strong id="selectedName">Sẵn sàng</strong>
+            <small id="selectedHint">Tên bạn được chọn sẽ xuất hiện ở đây</small>
+          </div>
+        </div>
+
+        <button class="call-button" id="callButton" type="button">
+          <span class="call-button__icon" aria-hidden="true">★</span>
+          <span>
+            <strong>GỌI HỌC SINH</strong>
+            <small>Nhấn phím cách cũng được nhé!</small>
+          </span>
+        </button>
+
+        <div class="recent" id="recentPanel" hidden>
+          <span>Vừa gọi:</span>
+          <div id="recentList" class="recent__list"></div>
+          <button id="clearHistoryButton" type="button">Xóa lượt</button>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span>Made with <b aria-label="yêu thương">♥</b> for our little stars</span>
+      <span>Mỗi bạn đều là một ngôi sao!</span>
+    </footer>
+
+    <div class="modal" id="rosterModal" hidden>
+      <div class="modal__backdrop" data-close-modal></div>
+      <section class="modal__panel" role="dialog" aria-modal="true" aria-labelledby="rosterTitle">
+        <button class="modal__close" id="closeModalButton" type="button" aria-label="Đóng">×</button>
+        <span class="modal__sticker" aria-hidden="true">✎</span>
+        <p class="eyebrow">Danh sách của lớp mình</p>
+        <h2 id="rosterTitle">Chỉnh sửa học sinh</h2>
+        <p>Mỗi dòng là tên một học sinh. Các dòng trống sẽ tự động được bỏ qua.</p>
+        <label for="rosterInput">Tên học sinh</label>
+        <textarea id="rosterInput" spellcheck="false"></textarea>
+        <div class="modal__meta">
+          <span id="rosterCount">40 học sinh</span>
+          <span>Tự động lưu trên thiết bị này</span>
+        </div>
+        <div class="modal__actions">
+          <button class="secondary-button" id="resetRosterButton" type="button">Khôi phục danh sách gốc</button>
+          <button class="primary-button" id="saveRosterButton" type="button">Lưu danh sách</button>
+        </div>
+      </section>
+    </div>
+
+    <noscript>Trang này cần JavaScript để chọn ngẫu nhiên học sinh.</noscript>
+    <script src="app.js"></script>
+  </body>
+</html>
